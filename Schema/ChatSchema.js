@@ -14,10 +14,7 @@ const chat = new mongoose.Schema({
 
   content: [
     {
-      senderid: {
-        type: mongoose.Schema.Types.ObjectId,
-      },
-      recieverid: {
+      author_id: {
         type: mongoose.Schema.Types.ObjectId,
       },
       message: {

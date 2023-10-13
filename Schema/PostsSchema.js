@@ -13,9 +13,16 @@ const post = new mongoose.Schema({
   caption: {
     type: String,
   },
-  likes: {
-    type: Number,
-  },
+  likes: [mongoose.Schema.Types.ObjectId],
+
+  comments: [
+    {
+      user_id: mongoose.Schema.Types.ObjectId,
+      content: {
+        type: String,
+      },
+    },
+  ],
 });
 
 const Post = mongoose.model("post", post);

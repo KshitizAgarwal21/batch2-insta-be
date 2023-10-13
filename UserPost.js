@@ -18,4 +18,36 @@ router.post("/addpost", async (req, res) => {
   }
 });
 
+router.post("/likepost", async (req, res) => {
+  const postWhichWasLiked = req.body.post_id;
+  const userWhoLiked = "652957639a5315d69de60f04";
+
+  const updateLikes = await Post.findByIdAndUpdate(postWhichWasLiked, {
+    $push: { likes: userWhoLiked },
+  });
+
+  if (updateLikes) {
+    res.status(200).send("liked successfully");
+  }
+});
+
+router.post("/addcomment", async (req, res) => {
+  const postWhichWasCommented = req.body.post_id;
+  const userWhoCommented = "652957639a5315d69de60f04";
+  const content = req.body.content;
+
+  const comment = {
+    user_id: userWhoCommented,
+    content: content,
+  };
+
+  const addComment = await Post.findByIdAndUpdate(postWhichWasCommented, {
+    $push: { comments: comment },
+  });
+
+  if (addComment) {
+    res.status(200).send("comment added successfully");
+  }
+});
+
 module.exports = router;
