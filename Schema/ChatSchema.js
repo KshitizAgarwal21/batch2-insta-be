@@ -14,15 +14,17 @@ const chat = new mongoose.Schema({
 
   content: [
     {
-      author_id: {
-        type: mongoose.Schema.Types.ObjectId,
-      },
-      message: {
-        type: String,
-      },
-      timeStamp: {
-        type: timeStamp,
-      },
+      type: new mongoose.Schema(
+        {
+          author_id: {
+            type: mongoose.Schema.Types.ObjectId,
+          },
+          message: {
+            type: String,
+          },
+        },
+        { timestamps: true }
+      ),
     },
   ],
 });

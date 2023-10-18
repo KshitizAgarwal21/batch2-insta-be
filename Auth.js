@@ -53,4 +53,14 @@ router.post("/signin", async (req, res) => {
     res.status(400).send({ msg: "bad request" });
   }
 });
+
+router.post("/getuserDetails", async (req, res) => {
+  const user_id = req.body.id;
+
+  const userDetails = await User.findById(user_id);
+
+  if (userDetails) {
+    res.status(200).send(userDetails.profile);
+  }
+});
 module.exports = router;
