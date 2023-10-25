@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const http = require("http");
 const server = http.createServer(app);
+const axios = require("axios");
 const io = require("socket.io")(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -35,8 +36,34 @@ io.on("connection", (socket) => {
 
     targetUser.emit("notify", {
       followReq: true,
+      liked: false,
       whoWishedToFollow: whoWishedToFollow,
     });
+  });
+
+  socket.on("like", (message) => {
+    const targetUser = connectedUsers[message.personWhosPost];
+    const whoLiked = message.personWhoLiked;
+
+    targetUser.emit("notify", {
+      followReq: false,
+      liked: true,
+      whoLiked: whoLiked,
+    });
+  });
+
+  socket.on("chat", async (obj) => {
+    //call an api to save in db
+    //emit an event to send this msg to other participant
+    let targetUser = connectedUsers[obj.recipient_id];
+
+    targetUser.emit("newchat", obj);
+    const addmessagetodb = await axios.post(
+      "http://localhost:8080/chat/newmessage",
+      obj
+    );
+
+    console.log(addmessagetodb.data);
   });
   socket.on("disconnect", () => {
     delete connectedUsers[socket.userId];

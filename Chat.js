@@ -4,16 +4,20 @@ const { Chat } = require("./Schema/ChatSchema");
 const router = express.Router();
 
 router.get("/chatlist", async (req, res) => {
-  const loggedinuserid = "652812f0bf41d828c0b78c60";
+  const loggedinuserid = req.headers.authorization;
+  console.log(loggedinuserid);
+  const chatlist = await Chat.find({
+    "participants.participant1": loggedinuserid,
+  });
 
-  const chatlist = await Chat.find(
-    {
-      "participants.participant1": loggedinuserid,
-    } || { "participants.particpant2": loggedinuserid }
-  );
-
-  if (chatlist) {
+  const chatlistalt = await Chat.find({
+    "participants.participant2": loggedinuserid,
+  });
+  console.log(chatlistalt);
+  if (chatlist.length != 0) {
     res.send(chatlist);
+  } else {
+    res.send(chatlistalt);
   }
 });
 
@@ -28,24 +32,18 @@ router.post("/convo", async (req, res) => {
 });
 
 router.post("/newmessage", async (req, res) => {
-  const loggedinuserid = "652812f0bf41d828c0b78c60";
-  const pranav = "652957639a5315d69de60f04";
+  const { author_id, recipient_id, message, conversation_id } = req.body;
 
-  const addChat = await Chat.findOneAndUpdate(
-    {
-      "participants.participant1": loggedinuserid,
-    } || { "participants.particpant2": loggedinuserid },
-    {
-      $push: {
-        content: {
-          author_id: pranav,
-          message: "Yes tell me I am free now",
-        },
+  const addChat = await Chat.findByIdAndUpdate(conversation_id, {
+    $push: {
+      content: {
+        author_id: author_id,
+        message: message,
       },
-    }
-  );
+    },
+  });
   if (addChat) {
-    console.log(addChat);
+    res.status(200).send("added chat");
   }
 });
 

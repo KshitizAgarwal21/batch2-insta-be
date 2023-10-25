@@ -36,6 +36,7 @@ router.post("/signin", async (req, res) => {
   if (userExist) {
     if (userExist.passowrd === passowrd) {
       var obj = {
+        userid: userExist._id,
         username: userExist.username,
         profile: userExist.profile,
         posts: userExist.posts,

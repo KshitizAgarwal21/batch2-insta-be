@@ -3,11 +3,11 @@ const mongoose = require("mongoose");
 const chat = new mongoose.Schema({
   participants: {
     participant1: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true,
     },
     participant2: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true,
     },
   },
