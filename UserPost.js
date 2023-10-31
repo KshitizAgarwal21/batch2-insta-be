@@ -1,13 +1,42 @@
 const express = require("express");
 const { Post } = require("./Schema/PostsSchema");
 const { User } = require("./Schema/UserSchema");
-
+const multer = require("multer");
+var FormData = require("form-data");
+const { default: axios } = require("axios");
+var maxSize = 1 * 1000 * 1000;
 const router = express.Router();
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads");
+  },
+  filename: (req, file, cb) => {
+    const ext = file.mimetype.split("/")[1];
+    cb(null, file.fieldname + Date.now() + `.${ext}`);
+  },
+});
+const multerFilter = (req, file, cb) => {
+  if (
+    file.mimetype.split("/")[1] === "pdf" ||
+    file.mimetype.split("/")[1] === "jpeg" ||
+    file.mimetype.split("/")[1] === "jpg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(new Error("File is not of supported format"), false);
+  }
+};
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+  limits: { fileSize: maxSize },
+}).single("myFile");
 
 router.post("/addpost", async (req, res) => {
+  console.log(req.body);
   const post = {
     user_id: req.headers.authorization,
-    media: req.body.media_url,
+    media: req.body.fileUrl,
     caption: req.body.caption,
   };
 
@@ -18,6 +47,20 @@ router.post("/addpost", async (req, res) => {
     res.status(200).send("post added successfully");
   }
 });
+// router.post("/addpost", async (req, res) => {
+//   const post = {
+//     user_id: req.headers.authorization,
+//     media: req.body.media_url,
+//     caption: req.body.caption,
+//   };
+
+//   const newpost = new Post(post);
+
+//   const createPost = await newpost.save();
+//   if (createPost) {
+//     res.status(200).send("post added successfully");
+//   }
+// });
 
 router.post("/getposts", async (req, res) => {
   //first check who is logged in or who has opened his profile
@@ -30,13 +73,24 @@ router.post("/getposts", async (req, res) => {
     if (findFollowingList) {
       findFollowingList.following.push(whoseProfileIsIt);
       const posts = findFollowingList.following.map(async (elem) => {
-        return await Post.findOne({ user_id: elem });
+        return await Post.find({ user_id: elem });
       });
 
       Promise.all(posts).then((response) => {
-        res.status(200).send(response);
+        let finalarr = [];
+        response.forEach((elem) => {
+          elem.map((ele) => {
+            finalarr.push(ele);
+          });
+        });
+        console.log(finalarr);
+        res.status(200).send(finalarr);
       });
     }
+  } else {
+    const posts = await Post.find({ user_id: whoseProfileIsIt });
+
+    res.status(200).send(posts);
   }
 });
 router.post("/likepost", async (req, res) => {

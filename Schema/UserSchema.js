@@ -38,6 +38,18 @@ const user = new mongoose.Schema({
   conversations: [mongoose.Schema.Types.ObjectId],
 });
 
-const User = mongoose.model("user", user);
+const reset = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+  },
 
-module.exports = { User };
+  otp: {
+    type: String,
+    required: true,
+  },
+});
+
+const User = mongoose.model("user", user);
+const Reset = mongoose.model("otp", reset);
+module.exports = { User, Reset };
