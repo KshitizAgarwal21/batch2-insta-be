@@ -67,30 +67,31 @@ router.post("/getposts", async (req, res) => {
   const whoseProfileIsIt = req.headers.authorization;
   // find the follwing list of that person
   const findFollowingList = await User.findById(whoseProfileIsIt);
-  console.log(findFollowingList.following);
-  if (findFollowingList.following.length != 0) {
-    //find the posts added by all the people in following list and return to frontend
-    if (findFollowingList) {
-      findFollowingList.following.push(whoseProfileIsIt);
-      const posts = findFollowingList.following.map(async (elem) => {
-        return await Post.find({ user_id: elem });
-      });
-
-      Promise.all(posts).then((response) => {
-        let finalarr = [];
-        response.forEach((elem) => {
-          elem.map((ele) => {
-            finalarr.push(ele);
-          });
+  if (findFollowingList) {
+    if (findFollowingList.following.length != 0) {
+      //find the posts added by all the people in following list and return to frontend
+      if (findFollowingList) {
+        findFollowingList.following.push(whoseProfileIsIt);
+        const posts = findFollowingList.following.map(async (elem) => {
+          return await Post.find({ user_id: elem });
         });
-        console.log(finalarr);
-        res.status(200).send(finalarr);
-      });
-    }
-  } else {
-    const posts = await Post.find({ user_id: whoseProfileIsIt });
 
-    res.status(200).send(posts);
+        Promise.all(posts).then((response) => {
+          let finalarr = [];
+          response.forEach((elem) => {
+            elem.map((ele) => {
+              finalarr.push(ele);
+            });
+          });
+          console.log(finalarr);
+          res.status(200).send(finalarr);
+        });
+      }
+    } else {
+      const posts = await Post.find({ user_id: whoseProfileIsIt });
+
+      res.status(200).send(posts);
+    }
   }
 });
 router.post("/likepost", async (req, res) => {

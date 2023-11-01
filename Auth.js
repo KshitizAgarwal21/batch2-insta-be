@@ -114,7 +114,7 @@ router.post("/validateotp", async (req, res) => {
   }
 });
 router.post("/resetpass", async (req, res) => {
-  const passowrd = req.body.passowrd;
+  const passowrd = req.body.password;
   const email = req.body.email;
 
   const update = await User.findOneAndUpdate(
