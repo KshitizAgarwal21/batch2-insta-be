@@ -44,7 +44,15 @@ router.post("/addpost", async (req, res) => {
 
   const createPost = await newpost.save();
   if (createPost) {
-    res.status(200).send("post added successfully");
+    const postid = createPost._id;
+
+    const addpostinuser = await User.findByIdAndUpdate(
+      req.headers.authorization,
+      { $push: { posts: postid } }
+    );
+    if (addpostinuser) {
+      res.status(200).send("post added successfully");
+    }
   }
 });
 // router.post("/addpost", async (req, res) => {

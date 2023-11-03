@@ -71,7 +71,22 @@ router.post("/getuserDetails", async (req, res) => {
     res.status(200).send(userDetails.profile);
   }
 });
+router.post("/getUserProfile", async (req, res) => {
+  const user_id = req.body.id;
 
+  const userDetails = await User.findById(user_id);
+
+  if (userDetails) {
+    res
+      .status(200)
+      .send({
+        profile: userDetails.profile,
+        followers: userDetails.followers,
+        following: userDetails.following,
+        posts: userDetails.posts,
+      });
+  }
+});
 router.post("/generateotp", async (req, res) => {
   let otp = Math.floor(Math.random(0, 1) * 1000000);
 
@@ -126,6 +141,26 @@ router.post("/resetpass", async (req, res) => {
     res.status(200).send("password changed successfully");
   } else {
     res.status(200).send("some error occured");
+  }
+});
+
+router.post("/refresh", async (req, res) => {
+  const user_id = req.headers.authorization;
+
+  const userDetails = await User.findById(user_id);
+
+  if (userDetails) {
+    var obj = {
+      userid: userDetails._id,
+      username: userDetails.username,
+      profile: userDetails.profile,
+      posts: userDetails.posts,
+      followers: userDetails.followers,
+      following: userDetails.following,
+    };
+
+    const updatedToken = jwt.sign(obj, "mysalt");
+    res.status(200).send(updatedToken);
   }
 });
 module.exports = router;
