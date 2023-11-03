@@ -17,16 +17,18 @@ let connectedUsers = {};
 io.use((socket, next) => {
   userId = socket.handshake.query.id;
   console.log(userId);
+
   next();
 });
 io.on("connection", (socket) => {
   console.log("user connected");
-  if (!connectedUsers[userId]) {
-    connectedUsers[userId] = socket;
+  if (userId != null) {
+    if (!connectedUsers[userId]) {
+      connectedUsers[userId] = socket;
 
-    socket.userId = userId;
+      socket.userId = userId;
+    }
   }
-
   // console.log(connectedUsers);
 
   //listening to an event from client
@@ -41,15 +43,22 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("like", (message) => {
-    const targetUser = connectedUsers[message.personWhosPost];
-    const whoLiked = message.personWhoLiked;
+  socket.on("like", async (message) => {
+    const targetUser = connectedUsers[message.whoPosted];
+    const whoLiked = message.wholiked;
+    const postid = message.postid;
 
-    targetUser.emit("notify", {
-      followReq: false,
-      liked: true,
-      whoLiked: whoLiked,
-    });
+    const like = await axios.post(
+      "http://localhost:8080/connections/like",
+      message
+    );
+    if (like.data == "post liked successfully") {
+      targetUser.emit("notify", {
+        followReq: false,
+        liked: true,
+        whoLiked: whoLiked,
+      });
+    }
   });
 
   socket.on("chat", async (obj) => {
@@ -64,6 +73,24 @@ io.on("connection", (socket) => {
     );
 
     console.log(addmessagetodb.data);
+  });
+
+  socket.on("follow-accept", async (obj) => {
+    const resp = await axios.post(
+      "http://localhost:8080/connections/acceptfollow",
+      { id: obj.id },
+      {
+        headers: {
+          Authorization: obj.user,
+        },
+      }
+    );
+    console.log(resp.data);
+    const targetUsermain = connectedUsers[obj.user];
+    const targetUserfollower = connectedUsers[obj.id];
+
+    targetUserfollower.emit("success-follow", "follow request accepted");
+    targetUsermain.emit("success-follow", "new follower added");
   });
   socket.on("disconnect", () => {
     delete connectedUsers[socket.userId];
