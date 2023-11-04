@@ -1,6 +1,8 @@
 const express = require("express");
 const { User, Reset } = require("./Schema/UserSchema");
 const jwt = require("jsonwebtoken");
+const { default: axios } = require("axios");
+const { Post } = require("./Schema/PostsSchema");
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
@@ -77,14 +79,12 @@ router.post("/getUserProfile", async (req, res) => {
   const userDetails = await User.findById(user_id);
 
   if (userDetails) {
-    res
-      .status(200)
-      .send({
-        profile: userDetails.profile,
-        followers: userDetails.followers,
-        following: userDetails.following,
-        posts: userDetails.posts,
-      });
+    res.status(200).send({
+      profile: userDetails.profile,
+      followers: userDetails.followers,
+      following: userDetails.following,
+      posts: userDetails.posts,
+    });
   }
 });
 router.post("/generateotp", async (req, res) => {
@@ -162,5 +162,90 @@ router.post("/refresh", async (req, res) => {
     const updatedToken = jwt.sign(obj, "mysalt");
     res.status(200).send(updatedToken);
   }
+});
+
+router.post("/verifyphone", async (req, res) => {
+  const apikey =
+    "d01df3e104c69be8665171ea459da262-d066281c-c742-410f-8b24-71535d668ca7";
+  console.log(req.body);
+  const tophone = req.body.phone;
+  let otp = Math.floor(Math.random() * 1000000);
+  const msgbody = {
+    messages: [
+      {
+        destinations: [
+          {
+            to: tophone,
+          },
+        ],
+        from: "InfoSMS",
+        text: "Your otp to verify is" + otp,
+      },
+    ],
+  };
+
+  const resp = await axios.post(
+    "https://l3q912.api.infobip.com/sms/2/text/advanced",
+    msgbody,
+    {
+      headers: {
+        Authorization: "App " + apikey,
+      },
+    }
+  );
+
+  if (resp.status == 200) {
+    console.log(resp.data);
+    const phoneschema = {
+      email: req.headers.authorization,
+      otp: otp,
+    };
+
+    const otpschema = new Reset(phoneschema);
+    const tempstoreotp = await otpschema.save();
+
+    if (tempstoreotp) {
+      setTimeout(async () => {
+        console.log("came here");
+        const deleteotp = await Reset.findByIdAndDelete(tempstoreotp._id);
+        console.log(deleteotp);
+        if (deleteotp) {
+          console.log("successfull");
+        }
+      }, 3 * 60 * 1000);
+
+      res.status(200).send("otp sent successfully");
+    }
+  }
+});
+
+router.post("/deactivate", async (req, res) => {
+  const user = req.headers.authorization;
+
+  const userData = await User.findById(user);
+
+  //get the posts id's from here
+  //get the following id from here and go to there profile and remove user from there follower
+  // get the followers of this person and go to there profile and remove the user from there following
+  let removefollower, removefollowing, removepost;
+  userData.posts.forEach(async (elem) => {
+    console.log("cam here");
+    removepost = await Post.findByIdAndDelete(elem);
+  });
+
+  userData.following?.forEach(async (elem) => {
+    removefollower = await User.findByIdAndUpdate(elem, {
+      $pull: { followers: user },
+    });
+  });
+
+  userData.followers?.forEach(async (elem) => {
+    removefollowing = await User.findByIdAndUpdate(elem, {
+      $pull: { following: user },
+    });
+  });
+
+  const deleteuser = await User.findByIdAndDelete(user);
+  res.status(200).send("thank you for using insta");
 });
 module.exports = router;
